@@ -256,11 +256,12 @@ class DoubleEditor(EditorWidget):
                                      self._get_value_slider(config['default']))
 
         # Connect slots
-        self._paramval_lineEdit.textChanged.connect(self._text_edited)
+        self._paramval_lineEdit.editingFinished.connect(self._text_edited)
         self._slider_horizontal.sliderReleased.connect(self._slider_released)
 
     def _text_edited(self):
-        '''Slot for text changed event in text field.'''
+        '''Slot for editing finished event in text field.'''
+        self.update_value(float(self._paramval_lineEdit.text()))
         self._update_paramserver(float(self._paramval_lineEdit.text()))
 
     def _get_value_textfield(self):
@@ -270,7 +271,9 @@ class DoubleEditor(EditorWidget):
     def _slider_released(self):
         '''Slot for mouse being released from slider.'''
         _slider_val = self._get_value_textfield()
-        self._update_text_gui(_slider_val)
+        self.update_value(float(_slider_val))
+        # Run self._update_paramserver to update the value on PServer
+        self._update_paramserver(float(_slider_val))
 
     def _get_value_slider(self, value):
         '''
@@ -278,18 +281,9 @@ class DoubleEditor(EditorWidget):
         '''
         return int(round((self._func(value)) / self.scale)) if self.scale else 0
 
-    def _update_text_gui(self, value):
-        self._paramval_lineEdit.setText(str(value))
-        rospy.loginfo(' DblEditor._update_text_gui val=%s', str(value))
-        # Run self._update_paramserver to update the value on PServer
-        self._update_paramserver(value)
-        self.update_value(value)
-
     def update_value(self, val):
-        # Can be redundant when the trigger is the move of slider.
-        self._slider_horizontal.setSliderPosition(
-                                            self._get_value_slider(float(val)))
-
+        rospy.logdebug(' DblEditor._update_value val=%s', str(val))
+        self._slider_horizontal.setSliderPosition(self._get_value_slider(float(val)))
         self._paramval_lineEdit.setText(str(val))
 
 
